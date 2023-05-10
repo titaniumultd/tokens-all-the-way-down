@@ -1,8 +1,10 @@
 import re
+from nltk import pos_tag
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 
+
 class Tokenizer:
-    def __init__(self, lowercase=False, delimiters=None, remove_stopwords=False, stem=False, lemmatize=False, ngram=1, min_token_length=1, custom_filter=None):
+    def __init__(self, lowercase=False, delimiters=None, remove_stopwords=False, stem=False, lemmatize=False, ngram=1, min_token_length=1, custom_filter=None, pos_tag=False):
         self.lowercase = lowercase
         self.remove_stopwords = remove_stopwords
         self.stem = stem
@@ -10,10 +12,14 @@ class Tokenizer:
         self.ngram = ngram
         self.min_token_length = min_token_length
         self.custom_filter = custom_filter
+        self.pos_tag = pos_tag
+
         self.stopwords_list = [
-            "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", "he", "in", "is", "it",
-            "its", "of", "on", "that", "the", "to", "was", "were", "will", "with"
+            "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", 
+            "he", "in", "is", "it", "its", "of", "on", "that", "the", "to", "was", 
+            "were", "will", "with"
         ]
+
         self.contractions_mapping = {
             "I'm": "I am",
             "can't": "cannot",
@@ -35,12 +41,21 @@ class Tokenizer:
             text = text.replace(contraction, expansion)
         return text
 
-    def generate_ngrams(self, tokens, n):
+    def generate_ngrams(self, tokens):
         ngrams = []
-        for i in range(len(tokens) - n + 1):
-            ngram = ' '.join(tokens[i:i+n])
+        for i in range(len(tokens) - self.ngram + 1):
+            ngram = ' '.join(tokens[i:i+self.ngram])
             ngrams.append(ngram)
         return ngrams
+
+    def apply_custom_filter(self, tokens):
+        return [token for token in tokens if self.custom_filter(token)]
+
+    def apply_pos_tagging(self, tokens):
+        return pos_tag(tokens)
+
+    def filter_by_length(self, tokens):
+        return [token for token in tokens if len(token) >= self.min_token_length]
 
     def tokenize(self, text):
         text = self.expand_contractions(text)
@@ -59,14 +74,14 @@ class Tokenizer:
             tokens = [self.lemmatizer.lemmatize(token) for token in tokens]
 
         if self.ngram > 1:
-            tokens = self.generate_ngrams(tokens, self.ngram)
+            tokens = self.generate_ngrams(tokens)
+
+        tokens = self.filter_by_length(tokens)
 
         if self.custom_filter is not None:
-            tokens = [token for token in tokens if self.custom_filter(token)]
+            tokens = self.apply_custom_filter(tokens)
 
-        
-        tokens = [token for token in tokens if len(token) >= self.min_token_length]
-
-
+        if self.pos_tag:
+            tokens = self.apply_pos_tagging(tokens)
 
         return tokens
