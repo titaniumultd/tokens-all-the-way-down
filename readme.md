@@ -16,6 +16,7 @@ This tokenizer supports several options, which can be enabled or disabled when i
 - Filtering tokens based on their length
 - Applying a custom filter to the tokens
 - Part-of-speech tagging
+- Unicode normalization
 
 ## Installation
 

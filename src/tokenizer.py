@@ -1,10 +1,12 @@
 import re
+import unicodedata
 from nltk import pos_tag
 from nltk.stem import PorterStemmer, WordNetLemmatizer
 
 
+
 class Tokenizer:
-    def __init__(self, lowercase=False, delimiters=None, remove_stopwords=False, stem=False, lemmatize=False, ngram=1, min_token_length=1, custom_filter=None, pos_tag=False):
+    def __init__(self, lowercase=False, delimiters=None, remove_stopwords=False, stem=False, lemmatize=False, ngram=1, min_token_length=1, custom_filter=None, pos_tag=False,  normalization=None):
         self.lowercase = lowercase
         self.remove_stopwords = remove_stopwords
         self.stem = stem
@@ -13,6 +15,7 @@ class Tokenizer:
         self.min_token_length = min_token_length
         self.custom_filter = custom_filter
         self.pos_tag = pos_tag
+        self.normalization = normalization
 
         self.stopwords_list = [
             "a", "an", "and", "are", "as", "at", "be", "by", "for", "from", "has", 
@@ -59,6 +62,10 @@ class Tokenizer:
 
     def tokenize(self, text):
         text = self.expand_contractions(text)
+
+        if self.normalization is not None:
+            text = unicodedata.normalize(self.normalization, text)
+
         tokens = re.findall(self.pattern, text)
 
         if self.lowercase:
@@ -82,6 +89,6 @@ class Tokenizer:
             tokens = self.apply_custom_filter(tokens)
 
         if self.pos_tag:
-            tokens = self.apply_pos_tagging(tokens)
+            tokens = self.apply_pos_tagging(tokens)        
 
         return tokens
